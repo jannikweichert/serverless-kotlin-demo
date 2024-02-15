@@ -15,10 +15,6 @@ org: hochzehn
 app: serverless-kotlin-demo
 service: initial-service
 
-# app and org for use with dashboard.serverless.com
-#app: your-app-name
-#org: your-org-name
-
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
 frameworkVersion: '3'
@@ -26,48 +22,38 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: java11
-
+  environment:
+    USERS_TABLE: ${self:service}-${sls:stage}-usersTable
 # you can overwrite defaults here
   stage: dev
   region: eu-central-1
   memorySize: 1472
 
 # you can add statements to the Lambda function's IAM Role here
-#  iam:
-#    role:
-#      statements:
-#        - Effect: "Allow"
-#          Action:
-#            - "s3:ListBucket"
-#          Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
-#        - Effect: "Allow"
-#          Action:
-#            - "s3:PutObject"
-#          Resource:
-#            Fn::Join:
-#              - ""
-#              - - "arn:aws:s3:::"
-#                - "Ref" : "ServerlessDeploymentBucket"
-#                - "/*"
 
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "dynamodb:PutItem"
+          Resource: "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.USERS_TABLE}"
 # you can define service wide environment variables here
-#  environment:
-#    variable1: value1
 
 # you can add packaging information here
 package:
-  artifact: build/libs/hello-dev-all.jar
+  artifact: build/libs/serverless-kotlin-demo-dev-all.jar
 
 functions:
   hello:
-    handler: com.serverless.Handler
+    handler: com.serverless.adapter.primary.apigateway.user.CreateUserHandler
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
     events:
       - httpApi:
-          path: /hello
-          method: get
+          path: /users
+          method: post
 #      - websocket: $connect
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
@@ -102,12 +88,22 @@ functions:
 #      variable2: value2
 
 # you can add CloudFormation resource templates here
-#resources:
-#  Resources:
-#    NewResource:
-#      Type: AWS::S3::Bucket
-#      Properties:
-#        BucketName: my-new-bucket
+resources: # CloudFormation template syntax from here on.
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.USERS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
 #  Outputs:
 #     NewOutput:
 #       Description: "Description for the output"

@@ -1,7 +1,8 @@
-package com.serverless
+package com.serverless.adapter.primary.apigateway
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.serverless.adapter.primary.apigateway.user.Response
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.nio.charset.StandardCharsets
@@ -19,7 +20,7 @@ class ApiGatewayResponse(
   }
 
   class Builder {
-    var LOG: Logger = LogManager.getLogger(ApiGatewayResponse.Builder::class.java)
+    var LOG: Logger = LogManager.getLogger(Builder::class.java)
     var objectMapper: ObjectMapper = ObjectMapper()
 
     var statusCode: Int = 200
